@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Plan Nutricional — Dante</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F7F4EF; --surface: #FFFFFF; --border: #E2DDD5;
+  --text: #1A1814; --muted: #7A756C; --accent: #C4583A; --accent-light: #F9EDE9;
+  --green: #3B6D3A; --green-light: #EDF4EC;
+  --blue: #2A5FA5; --blue-light: #EBF1FA;
+  --amber: #8A5C12; --amber-light: #FBF3E3;
+  --purple: #5B4AB0; --purple-light: #F0EEFB;
+  --radius: 12px; --radius-sm: 7px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+header { background: var(--text); color: #fff; padding: 2rem 2rem 1.5rem; }
+header p.label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+header h1 { font-family: 'DM Serif Display', serif; font-size: 28px; font-weight: 400; margin-bottom: 4px; }
+header .plan-tag { display: inline-block; background: var(--accent); color: #fff; font-size: 12px; padding: 3px 10px; border-radius: 999px; margin-top: 8px; }
+.menu-tabs { display: flex; background: var(--text); padding: 0 2rem; border-top: 1px solid rgba(255,255,255,0.1); }
+.menu-tab { padding: 10px 20px; font-size: 13px; color: rgba(255,255,255,0.5); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; background: none; border-left: none; border-right: none; border-top: none; font-family: 'DM Sans', sans-serif; }
+.menu-tab.active { color: #fff; border-bottom-color: var(--accent); }
+.main { padding: 1.5rem 2rem; max-width: 860px; margin: 0 auto; }
+.meal-grid { display: flex; flex-direction: column; gap: 1rem; }
+.meal-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: visible; }
+.meal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+.meal-header-left { display: flex; align-items: center; gap: 12px; }
+.meal-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.meal-title { font-size: 15px; font-weight: 500; }
+.meal-subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.meal-chevron { font-size: 18px; color: var(--muted); transition: transform 0.2s; display: inline-block; }
+.meal-body { display: none; padding: 18px; }
+.meal-card.open .meal-body { display: block; }
+.meal-card.open .meal-chevron { transform: rotate(180deg); }
+.section-label { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: block; }
+ 
+/* eq group */
+.eq-group { border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; border: 1px solid var(--border); }
+.eq-group-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.eq-badge { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+.eq-total-label { font-size: 13px; color: var(--muted); flex: 1; }
+.eq-counter { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; }
+.eq-counter span.used { color: var(--text); }
+.eq-counter span.slash { color: var(--muted); }
+.eq-counter span.total { color: var(--muted); }
+.eq-counter.over span.used { color: var(--accent); }
+.eq-counter.ok span.used { color: var(--green); }
+ 
+/* split rows */
+.eq-splits { border-top: 1px solid var(--border); }
+.eq-split-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.eq-split-row:last-child { border-bottom: none; }
+.split-select { flex: 1; font-size: 13px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; cursor: pointer; }
+.split-qty-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.qty-btn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: none; cursor: pointer; font-size: 15px; color: var(--text); display: flex; align-items: center; justify-content: center; font-family: 'DM Sans', sans-serif; line-height: 1; }
+.qty-btn:disabled { opacity: 0.3; cursor: default; }
+.qty-num { font-size: 13px; font-weight: 500; min-width: 18px; text-align: center; }
+.remove-btn { width: 24px; height: 24px; border-radius: 50%; border: none; background: none; cursor: pointer; color: var(--muted); font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.remove-btn:hover { color: var(--accent); }
+.add-split-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; font-size: 13px; color: var(--blue); background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; width: 100%; border-top: 1px dashed var(--border); }
+.add-split-btn:hover { background: var(--blue-light); }
+ 
+.warn-bar { font-size: 12px; padding: 6px 12px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); }
+.warn-over { background: #FEF0EC; color: var(--accent); }
+.warn-under { background: var(--amber-light); color: var(--amber); }
+.warn-ok { background: var(--green-light); color: var(--green); }
+ 
+.note-box { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
+.free-snack { background: var(--green-light); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; color: var(--green); line-height: 1.7; }
+ 
+.color-verdura { background: var(--green-light); }
+.color-cereal  { background: var(--amber-light); }
+.color-protein { background: var(--accent-light); }
+.color-fruta   { background: var(--purple-light); }
+.color-legum   { background: var(--blue-light); }
+.color-grasa   { background: #F4F0FB; }
+.badge-verdura { background: var(--green-light); color: var(--green); }
+.badge-cereal  { background: var(--amber-light); color: var(--amber); }
+.badge-protein { background: var(--accent-light); color: var(--accent); }
+.badge-fruta   { background: var(--purple-light); color: var(--purple); }
+.badge-legum   { background: var(--blue-light); color: var(--blue); }
+.badge-grasa   { background: #F4F0FB; color: var(--purple); }
+.icon-desayuno { background: #FFF3CD; }
+.icon-colacion { background: var(--green-light); }
+.icon-comida   { background: #FCE8E8; }
+.icon-cena     { background: #E8ECF8; }
+.icon-preent   { background: var(--purple-light); }
+ 
+.recom-section { margin-top: 1.5rem; }
+.recom-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 10px; margin-top: 12px; }
+.recom-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.recom-num { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--accent); display: block; margin-bottom: 4px; }
+footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+ 
+<header>
+  <p class="label">Plan nutricional</p>
+  <h1>Dante Alejandro Alegría</h1>
+  <span class="plan-tag">1,900 kcal · Mayo 2026</span>
+</header>
+ 
+<div class="menu-tabs">
+  <button class="menu-tab active" onclick="setMenu(1)">Menú 1</button>
+  <button class="menu-tab" onclick="setMenu(2)">Menú 2</button>
+</div>
+ 
+<div class="main">
+  <div class="meal-grid" id="meal-grid"></div>
+  <div class="recom-section">
+    <span class="section-label">Recomendaciones generales</span>
+    <div class="recom-grid">
+      <div class="recom-card"><span class="recom-num">3.5 L</span>Agua mínima al día</div>
+      <div class="recom-card"><span class="recom-num">0</span>Fritos, empanizados o capeados</div>
+      <div class="recom-card"><span class="recom-num">✓</span>Endulza con stevia, splenda o monk fruit</div>
+      <div class="recom-card"><span class="recom-num">✓</span>Mide porciones con taza medidora o báscula</div>
+    </div>
+  </div>
+</div>
+ 
+<footer>Nutriólogo Pedro Andrade · @andradenutricion · Próxima cita: segunda semana de junio</footer>
+ 
+<script>
+const EQ = {
+  verdura: { label:'Verdura', cls:'verdura', options:['Verdura libre (tu preferencia)','Calabaza','Jitomate','Brócoli','Espinaca','Chile poblano','Zanahoria','Pepino','Nopales','Chayote','Coliflor','Champiñones'] },
+  cerealA: { label:'Cereal A', cls:'cereal', options:['Tortilla de maíz (1 pieza)','Bolillo sin migajón (⅓ pieza)','Arroz cocido (¼ taza)','Pasta cocida (½ taza)','Papa o camote (½ taza)','Elote (60 g)','Pan integral (1 rebanada)','Cereal sin azúcar (30 g)','Amaranto (¼ taza)','Salmas / galletas saladas (1 paq.)'] },
+  aoaA:   { label:'AOA A', cls:'protein', options:['Pechuga de pollo sin piel (30 g)','Bistec de res (30 g)','Pescado (40 g)','Claras de huevo (2 = 66 ml)','Cottage (2 cdas = 30 g)','Camarones (2 piezas)','Chuleta ahumada (¼ pieza)','Atún ⅓ lata + ¼ scoop proteína'] },
+  aoaB:   { label:'AOA B', cls:'protein', options:['Queso panela (40 g)','Carne molida 90/10 (30 g)','Jamón de pavo (2 rebanadas)','Cottage (30 g)'] },
+  aoaC:   { label:'AOA C', cls:'protein', options:['Huevo entero (1 pieza)','Queso Oaxaca (30 g)','Carne deshebrada (30 g)'] },
+  fruta:  { label:'Fruta', cls:'fruta', options:['Manzana chica (1 pieza)','Naranja (1 pieza)','Plátano (½ pieza)','Mango (½ pieza)','Guayabas (2 piezas)','Uvas (12 piezas)','Papaya / melón / sandía / fresas (1 taza)','Duraznos (2 piezas)'] },
+  legum:  { label:'Leguminosas', cls:'legum', options:['Frijoles (½ taza)','Lentejas (½ taza)','Garbanzos (½ taza)'] },
+  grasaA: { label:'Grasa A', cls:'grasa', options:['Aguacate (⅓ pieza)','Aceite / aderezo ranch (5 ml)','Coco rallado o crema (1½ cda)','Mayonesa (1 cdita)','Mayonesa ligera (2 cdas)'] }
+};
+ 
+const MENUS = {
+  1:[
+    { id:'des1', meal:'Desayuno', dish:'Migas de huevo', icon:'🍳', iconCls:'icon-desayuno',
+      eqs:[{type:'verdura',qty:1},{type:'cerealA',qty:4},{type:'aoaA',qty:1},{type:'aoaC',qty:2}],
+      note:'Preparar con la menor cantidad de aceite posible. Puedes hacerlo en omelette, cocido, revuelto, etc.' },
+    { id:'col1', meal:'Colación', dish:'Colación libre', icon:'🥒', iconCls:'icon-colacion', free:true,
+      freeText:'1 taza de jícama, pepino o zanahoria con sal y limón<br>1 taza de gelatina sin azúcar' },
+    { id:'com1', meal:'Comida', dish:'Pollo a la plancha', icon:'🍽️', iconCls:'icon-comida',
+      eqs:[{type:'verdura',qty:1},{type:'cerealA',qty:5},{type:'aoaA',qty:5}],
+      note:'½ taza sopa de fideo + 4 tortillas de maíz + 150 g pechuga de pollo sin piel. Acompaña con limón y salsa casera al gusto.' },
+    { id:'pre1', meal:'Pre-entreno', dish:'Fruta', icon:'🍎', iconCls:'icon-preent',
+      eqs:[{type:'fruta',qty:1}] },
+    { id:'cen1', meal:'Cena', dish:'Chuleta de cerdo', icon:'🌙', iconCls:'icon-cena',
+      eqs:[{type:'verdura',qty:1},{type:'cerealA',qty:6},{type:'aoaA',qty:4}],
+      note:'1 taza de arroz + 2 tortillas de maíz + 1 chuleta de cerdo. Acompaña con la salsa de tu preferencia.' }
+  ],
+  2:[
+    { id:'des2', meal:'Desayuno', dish:'Molletes', icon:'🍳', iconCls:'icon-desayuno',
+      eqs:[{type:'verdura',qty:1},{type:'cerealA',qty:3},{type:'legum',qty:2},{type:'aoaB',qty:1}],
+      note:'1 bolillo sin migajón + ½ taza frijoles + 40 g panela. Acompaña con pico de gallo.' },
+    { id:'col2', meal:'Colación', dish:'Colación libre', icon:'🥒', iconCls:'icon-colacion', free:true,
+      freeText:'1 taza de jícama, pepino o zanahoria con limón y tajín<br>1 taza de gelatina sin azúcar' },
+    { id:'com2', meal:'Comida', dish:'Burritos de asada', icon:'🌯', iconCls:'icon-comida',
+      eqs:[{type:'verdura',qty:1},{type:'cerealA',qty:5},{type:'aoaA',qty:5}],
+      note:'5 tortillinas Tía Rosa ligeras + 150 g bistec de res. Acompaña con limón y salsa casera al gusto.' },
+    { id:'col2b', meal:'Colación', dish:'Fruta o snack', icon:'🍎', iconCls:'icon-preent',
+      eqs:[{type:'fruta',qty:1}],
+      note:'1 brownie Fiber One o 1 manzana.' },
+    { id:'cen2', meal:'Cena', dish:'Quesadillas (3 pzas)', icon:'🌙', iconCls:'icon-cena',
+      eqs:[{type:'verdura',qty:1},{type:'cerealA',qty:3},{type:'aoaB',qty:5},{type:'grasaA',qty:2}],
+      note:'3 tortillas de maíz + 40 g panela + 1 rebanada jamón c/u + 2 rebanadas aguacate c/u.' }
+  ]
+};
+ 
+// state: splits per meal+eqType  { 'des1_cerealA': [{optIdx:0, qty:2}, {optIdx:3, qty:2}] }
+const splits = {};
+ 
+function splitKey(mealId, eqType) { return mealId + '_' + eqType; }
+ 
+function getSplits(mealId, eqType, totalQty) {
+  const k = splitKey(mealId, eqType);
+  if (!splits[k]) splits[k] = [{optIdx:0, qty:totalQty}];
+  return splits[k];
+}
+ 
+function usedQty(mealId, eqType) {
+  const k = splitKey(mealId, eqType);
+  return (splits[k]||[]).reduce((s,r) => s + r.qty, 0);
+}
+ 
+function renderEqGroup(mealId, eq) {
+  const def = EQ[eq.type];
+  const totalQty = eq.qty;
+  const rows = getSplits(mealId, eq.type, totalQty);
+  const used = rows.reduce((s,r) => s + r.qty, 0);
+  const remaining = totalQty - used;
+ 
+  const group = document.createElement('div');
+  group.className = 'eq-group';
+  group.id = `grp_${mealId}_${eq.type}`;
+ 
+  // header
+  const hdr = document.createElement('div');
+  hdr.className = `eq-group-header color-${def.cls}`;
+  const counterCls = used > totalQty ? 'over' : (used === totalQty ? 'ok' : '');
+  hdr.innerHTML = `
+    <span class="eq-badge badge-${def.cls}">${def.label}</span>
+    <span class="eq-total-label">Total: ${totalQty} equivalente${totalQty!==1?'s':''}</span>
+    <span class="eq-counter ${counterCls}">
+      <span class="used">${used}</span>
+      <span class="slash">/</span>
+      <span class="total">${totalQty}</span>
+    </span>`;
+  group.appendChild(hdr);
+ 
+  // split rows
+  const splitsDiv = document.createElement('div');
+  splitsDiv.className = 'eq-splits';
+ 
+  rows.forEach((row, idx) => {
+    const sr = document.createElement('div');
+    sr.className = 'eq-split-row';
+ 
+    const sel = document.createElement('select');
+    sel.className = 'split-select';
+    def.options.forEach((opt, i) => {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = opt;
+      if (i === row.optIdx) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', () => {
+      row.optIdx = parseInt(sel.value);
+    });
+ 
+    const qtyWrap = document.createElement('div');
+    qtyWrap.className = 'split-qty-wrap';
+ 
+    const btnMinus = document.createElement('button');
+    btnMinus.className = 'qty-btn';
+    btnMinus.textContent = '−';
+    btnMinus.disabled = row.qty <= 1;
+    btnMinus.addEventListener('click', () => {
+      if (row.qty > 1) { row.qty--; refreshEqGroup(mealId, eq); }
+    });
+ 
+    const qtyNum = document.createElement('span');
+    qtyNum.className = 'qty-num';
+    qtyNum.textContent = row.qty;
+ 
+    const btnPlus = document.createElement('button');
+    btnPlus.className = 'qty-btn';
+    btnPlus.textContent = '+';
+    btnPlus.disabled = used >= totalQty;
+    btnPlus.addEventListener('click', () => {
+      const u = rows.reduce((s,r) => s + r.qty, 0);
+      if (u < totalQty) { row.qty++; refreshEqGroup(mealId, eq); }
+    });
+ 
+    qtyWrap.appendChild(btnMinus);
+    qtyWrap.appendChild(qtyNum);
+    qtyWrap.appendChild(btnPlus);
+ 
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.title = 'Quitar';
+    removeBtn.textContent = '×';
+    removeBtn.disabled = rows.length <= 1;
+    removeBtn.style.opacity = rows.length <= 1 ? '0.2' : '1';
+    removeBtn.addEventListener('click', () => {
+      const k = splitKey(mealId, eq.type);
+      splits[k].splice(idx, 1);
+      refreshEqGroup(mealId, eq);
+    });
+ 
+    sr.appendChild(sel);
+    sr.appendChild(qtyWrap);
+    sr.appendChild(removeBtn);
+    splitsDiv.appendChild(sr);
+  });
+ 
+  group.appendChild(splitsDiv);
+ 
+  // add button
+  if (remaining > 0) {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-split-btn';
+    addBtn.innerHTML = `+ Agregar otra opción <span style="color:var(--muted);font-size:12px;margin-left:4px">(quedan ${remaining} eq)</span>`;
+    addBtn.addEventListener('click', () => {
+      const k = splitKey(mealId, eq.type);
+      splits[k].push({optIdx:0, qty:1});
+      refreshEqGroup(mealId, eq);
+    });
+    group.appendChild(addBtn);
+  }
+ 
+  // warning bar
+  const warn = document.createElement('div');
+  warn.className = 'warn-bar';
+  if (used > totalQty) {
+    warn.className += ' warn-over';
+    warn.textContent = `⚠ Te pasaste por ${used - totalQty} equivalente${used-totalQty!==1?'s':''}.`;
+  } else if (used < totalQty) {
+    warn.className += ' warn-under';
+    warn.textContent = `Faltan ${remaining} equivalente${remaining!==1?'s':''} por asignar.`;
+  } else {
+    warn.className += ' warn-ok';
+    warn.textContent = `✓ Completo`;
+  }
+  group.appendChild(warn);
+ 
+  return group;
+}
+ 
+function refreshEqGroup(mealId, eq) {
+  const oldGrp = document.getElementById(`grp_${mealId}_${eq.type}`);
+  if (oldGrp) {
+    const newGrp = renderEqGroup(mealId, eq);
+    oldGrp.replaceWith(newGrp);
+  }
+}
+ 
+let currentMenu = 1;
+ 
+function setMenu(n) {
+  currentMenu = n;
+  document.querySelectorAll('.menu-tab').forEach((t,i) => t.classList.toggle('active', i+1===n));
+  buildGrid();
+}
+ 
+function buildGrid() {
+  const grid = document.getElementById('meal-grid');
+  grid.innerHTML = '';
+  MENUS[currentMenu].forEach(meal => {
+    const card = document.createElement('div');
+    card.className = 'meal-card';
+ 
+    const hdr = document.createElement('div');
+    hdr.className = 'meal-header';
+    hdr.innerHTML = `
+      <div class="meal-header-left">
+        <div class="meal-icon ${meal.iconCls}">${meal.icon}</div>
+        <div>
+          <div class="meal-title">${meal.dish}</div>
+          <div class="meal-subtitle">${meal.meal}</div>
+        </div>
+      </div>
+      <span class="meal-chevron">⌄</span>`;
+    hdr.addEventListener('click', () => card.classList.toggle('open'));
+ 
+    const body = document.createElement('div');
+    body.className = 'meal-body';
+ 
+    if (meal.free) {
+      body.innerHTML = `<div class="free-snack">${meal.freeText}</div>`;
+    } else {
+      const lbl = document.createElement('span');
+      lbl.className = 'section-label';
+      lbl.textContent = 'Distribuye tus equivalentes como prefieras';
+      body.appendChild(lbl);
+ 
+      meal.eqs.forEach(eq => {
+        body.appendChild(renderEqGroup(meal.id, eq));
+      });
+ 
+      if (meal.note) {
+        const note = document.createElement('div');
+        note.className = 'note-box';
+        note.textContent = meal.note;
+        body.appendChild(note);
+      }
+    }
+ 
+    card.appendChild(hdr);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+}
+ 
+buildGrid();
+</script>
+</body>
+</html>
